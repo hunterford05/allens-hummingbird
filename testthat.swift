@@ -1,80 +1,57 @@
 import Foundation
 
-public class TestThat{
+/// A minimalist testing tool with a focus on flexibility and intuitive
+///  syntax.
+public class TT<Inputs,Result: Equatable>{
 
-  /// Name of this test subject
-  let subjectName: String
-
-  /// Current test count
-  var testCounter: Int = 0
+  /// A `Test` is a closure that takes in generic `Inputs` and returns
+  ///  a generic (but `Equatable`) `Result` 
+  public typealias Test = (Inputs)->Result
   
-  /**
-    Initializes a new `TestThat` object with the given test subject
-    name.
-
-    - Parameters:
-      - testSubjectNameHere: The name of this test's subject
-  */
-  init(_ testSubjectNameHere: String){
-    self.subjectName = testSubjectNameHere
-  }
+  /// Test case to run
+  var test: Test 
+  /// Test counter — useful for showing which test(s) fail
+  var counter: Int = 0
+  /// Name of what is being tested (e.g. "foo()")
+  let name: String
 
   /**
-    Execute a block of code and compare the result with the expected
-    one; if the result is not a match, print a helpful message.
+    Initializes a `TT` testing tool with the provided test case and
+     subject name.
 
     - Parameters:
-      - expected: The expected result
-      - test: The block of code to run
+      - _: The name of whatever is being tested (e.g. "foo()")
+      - when: The `Test` to run
 
-    - Returns: This `TestThat` instance (allows for chaining)
-
+    - Returns: A shiny new `TT` testing tool instance
   */
-  @discardableResult func returns<Result: Equatable>(_ expected: Result, 
-   when test: ()->Result)->TestThat{
-    self.testCounter += 1
-    let result = test()
-    if result != expected {
-      print("'\(self.subjectName)' FAILED test #\(self.testCounter) " +
-       "expected '\(expected)', but got '\(result)'.")
-    }
-    return self
-  }
-}
-
-
-public class Test<Inputs>{
-
-  var test: (Inputs)->Any
-
-  public init(when test: @escaping (Inputs)->Any){
+  public init(_ name: String, when test: @escaping Test){
     self.test = test
+    self.name = name 
   }
+  
+  /**
+    Run a test.
 
-  @discardableResult public func it<Result: Equatable>(is expected: 
-   Result, if inputs: Inputs)->Test{
-    TT.testCounter += 1
-    let rawResult = self.test(inputs)
-    guard let result = rawResult as? Result, 
-     result == expected else {
-      print("FAILED test #\(TT.testCounter): " + 
-       "expected: '\(expected)', but got '\(rawResult)'.")
-      return self
+    Increments the test counter and performs the test with the given
+     inputs: if the result is incorrect, print an error message 
+     identifying the failing test as well as the expected and actual
+     outputs.
+
+    - Parameters:
+      - is: The expected result
+      - if: The input
+
+    - Returns: This `TT` instance
+  */
+  @discardableResult public func it(is expected: 
+   Result, if inputs: Inputs)->TT<Inputs,Result>{
+    counter += 1
+    let result = self.test(inputs)
+    if result != expected {
+      print("'\(name)' FAILED test #\(counter): " + 
+       "expected: '\(expected)', but got '\(result)'.")
     }
     return self
   }
-
 }
-
-public class TT{
-  
-  static var testCounter: Int = 0
-
-  @discardableResult public func 
-   when<T>(_ test: @escaping (T)->Any)->Test<T>{
-    return Test<T>(when: test) 
-  }
-
-}
-
-
