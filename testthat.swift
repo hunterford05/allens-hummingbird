@@ -41,3 +41,34 @@ public class TestThat{
     return self
   }
 }
+
+public class TT<Inputs>{
+
+  public typealias TestCase = (Inputs)->Any
+
+  var test: (Inputs)->Any
+  let subjectName: String
+  var testCounter: Int = 0
+
+  public init(_ testSubjectNameHere: String, 
+   when test: @escaping TestCase){
+    self.test = test
+    self.subjectName = testSubjectNameHere
+  }
+
+  @discardableResult public func it<Result: Equatable>(is expected: 
+   Result, if inputs: Inputs)->TT{
+    self.testCounter += 1
+    let rawResult = self.test(inputs)
+    guard let result = rawResult as? Result, 
+     result == expected else {
+      print("\(self.subjectName) FAILED test #\(self.testCounter): " + 
+       "expected: '\(expected)', but got '\(rawResult)'.")
+      return self
+    }
+    return self
+  }
+
+}
+
+
